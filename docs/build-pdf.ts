@@ -77,7 +77,8 @@ async function main() {
   // Run the test suites first: integration tests reuse and change the test database.
   const counts = testCounts();
   const seeded = await reseed();
-  const server = spawn("npx", ["next", "start", "-p", String(PORT)], {
+  const server = spawn("node_modules/.bin/next", ["start", "-p", String(PORT)], {
+    detached: true,
     env: { ...process.env, DATABASE_URL: DB_URL, CAMPUSFIND_TODAY: TODAY, SESSION_SECRET: "docs-secret-campusfind-0123456789", NODE_ENV: "production" },
     stdio: "ignore",
   });
@@ -302,7 +303,8 @@ npm run dev               # http://localhost:3000</pre>
     await printPdf(html, "docs/CampusFind-Documentation.pdf", "campusfind documentation");
     console.log("wrote docs/CampusFind-Documentation.pdf");
   } finally {
-    server.kill();
+    // Stop the whole process group so no Next.js server is left holding the port.
+    if (server.pid) process.kill(-server.pid, "SIGTERM");
   }
 }
 
